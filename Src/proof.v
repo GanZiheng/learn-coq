@@ -237,3 +237,23 @@ Proof.
     rewrite <- IHn'.
     reflexivity.
 Qed.
+
+(* 未必要同时引入所有前提 *)
+Theorem andb_eq_orb :
+  forall (b c : bool),
+  (andb b c = orb b c) ->
+  b = c.
+Proof.
+  intros [] [].
+  - reflexivity.
+  - simpl.
+    (* 先简化后引入 *)
+    intros H.
+    rewrite H.
+    reflexivity.
+  - simpl.
+    intros H.
+    rewrite H.
+    reflexivity.
+  - reflexivity.
+Qed.
