@@ -1,4 +1,4 @@
-From LF Require Export nat.
+From MyCoq.Src Require Export nat.
 
 (* simpl 来化简, reflexivity 来检查两边*)
 Theorem plus_0_n: forall n : nat, O + n = n.

@@ -4,5 +4,4 @@
 *.vok
 *.vos
 
-lib/*Makefile*
-src/*Makefile*
+*Makefile*
