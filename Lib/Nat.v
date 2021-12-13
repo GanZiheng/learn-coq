@@ -6,10 +6,10 @@ Inductive nat : Type :=
   | S (n : nat).
 
 
-Fixpoint num (n : Datatypes.nat) : nat :=
+Fixpoint N (n : Datatypes.nat) : nat :=
 match n with
 | 0 => O
-| Datatypes.S m => S (num m)
+| Datatypes.S m => S (N m)
 end.
 
 
@@ -173,3 +173,23 @@ Proof.
     rewrite <- plus_assoc.
     reflexivity.
 Qed.
+
+
+Inductive bin : Type :=
+  | Z
+  | A (n : bin)
+  | B (n : bin).
+
+Fixpoint incr (n : bin) : bin :=
+  match n with
+  | Z => B Z
+  | A n' => B n'
+  | B n' => A (incr n')
+  end.
+
+Fixpoint bin_to_nat (n : bin) : nat :=
+  match n with
+  | Z => O
+  | A n' => (N 2) * (bin_to_nat n')
+  | B n' => (N 1) + (N 2) * (bin_to_nat n')
+  end.

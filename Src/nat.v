@@ -151,3 +151,50 @@ Proof. simpl. reflexivity. Qed.
 Notation "x <? y" := (leb x y) (at level 50).
 
 Compute 2 <? 3.
+
+Inductive bin : Type :=
+  | Z
+  | A (n : bin)
+  | B (n : bin).
+
+Fixpoint incr (n : bin) : bin :=
+  match n with
+  | Z => B Z
+  | A n' => B n'
+  | B n' => A (incr n')
+  end.
+
+Fixpoint bin_to_nat (n : bin) : nat :=
+  match n with
+  | Z => O
+  | A n' => 2 * (bin_to_nat n')
+  | B n' => 1 + 2 * (bin_to_nat n')
+  end.
+
+Example test_bin_incr1: (incr (B Z)) = A (B Z).
+Proof. simpl. reflexivity. Qed.
+Example test_bin_incr2: (incr (A (B Z))) = B (B Z).
+Proof. simpl. reflexivity. Qed.
+Example test_bin_incr3: (incr (B (B Z))) = A (A (B Z)).
+Proof. simpl. reflexivity. Qed.
+
+Example test_bin_incr4: bin_to_nat (A (B Z)) = 2.
+Proof. simpl. reflexivity. Qed.
+Example test_bin_incr5:
+  bin_to_nat (incr (B Z)) = 1 + bin_to_nat (B Z).
+Proof. simpl. reflexivity. Qed.
+Example test_bin_incr6:
+  bin_to_nat (incr (incr (B Z))) = 2 + bin_to_nat (B Z).
+Proof. simpl. reflexivity. Qed.
+
+Fixpoint nat_to_bin (n : nat) : bin :=
+  match n with
+  | O => Z
+  | S n' => incr (nat_to_bin n')
+  end.
+
+Example nat_to_bin1: nat_to_bin 0 = Z.
+Proof. simpl. reflexivity. Qed.
+Example nat_to_bin2:
+  nat_to_bin 5 = B (A (B Z)).
+Proof. simpl. reflexivity. Qed.
