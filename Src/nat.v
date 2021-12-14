@@ -129,12 +129,21 @@ Proof. simpl. reflexivity. Qed.
 Example test_eqb3: eqb 2 2 = true.
 Proof. simpl. reflexivity. Qed.
 
-Fixpoint leb (n m : nat) : bool :=
+Fixpoint ltb (n m : nat) : bool :=
   match n with
   | O => match m with
-         | O => false
-         | _ => true
-         end
+          | O => false
+          | _ => true
+          end
+  | S n' => match m with
+            | O => false
+            | S m' => ltb n' m'
+            end
+  end.
+
+Fixpoint leb (n m : nat) : bool :=
+  match n with
+  | O => true
   | S n' => match m with
             | O => false
             | S m' => leb n' m'
@@ -143,12 +152,14 @@ Fixpoint leb (n m : nat) : bool :=
 
 Example test_leb1: leb 0 1 = true.
 Proof. simpl. reflexivity. Qed.
-Example test_leb2: leb 0 0 = false.
+Example test_leb2: leb 0 0 = true.
 Proof. simpl. reflexivity. Qed.
 Example test_leb3: leb 1 0 = false.
 Proof. simpl. reflexivity. Qed.
 
-Notation "x <? y" := (leb x y) (at level 50).
+Notation "x <? y" := (ltb x y) (at level 50).
+
+Notation "x <=? y" := (leb x y) (at level 50).
 
 Compute 2 <? 3.
 

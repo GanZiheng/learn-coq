@@ -36,12 +36,21 @@ Fixpoint eqb (n m : nat) : bool :=
             end
   end.
 
-Fixpoint leb (n m : nat) : bool :=
+Fixpoint ltb (n m : nat) : bool :=
   match n with
   | O => match m with
           | O => false
           | _ => true
           end
+  | S n' => match m with
+            | O => false
+            | S m' => ltb n' m'
+            end
+  end.
+
+Fixpoint leb (n m : nat) : bool :=
+  match n with
+  | O => true
   | S n' => match m with
             | O => false
             | S m' => leb n' m'
@@ -77,7 +86,9 @@ Fixpoint exp (base power : nat) : nat :=
 
 Notation "x =? y" := (eqb x y) (at level 70, no associativity).
 
-Notation "x <? y" := (leb x y) (at level 70, no associativity).
+Notation "x <? y" := (ltb x y) (at level 70, no associativity).
+
+Notation "x <=? y" := (leb x y) (at level 70, no associativity).
 
 
 Notation "x + y" := (plus x y) (at level 50, left associativity).
@@ -103,7 +114,7 @@ Proof.
     reflexivity.
 Qed.
 
-Theorem n_plus_Sm: forall n m : nat,
+Theorem plus_n_Sm: forall n m : nat,
   n + S m = S (n + m) .
 Proof.
   intros n m.
@@ -125,7 +136,7 @@ Proof.
     rewrite plus_n_O.
     reflexivity.
   - simpl.
-    rewrite n_plus_Sm.
+    rewrite plus_n_Sm.
     rewrite IHn'.
     reflexivity.
 Qed.
@@ -169,8 +180,23 @@ Proof.
   (* * 的定义以及 + 的定义 *)
   - simpl.
     rewrite <- IHn'.
-    rewrite -> n_plus_Sm.
+    rewrite -> plus_n_Sm.
     rewrite <- plus_assoc.
+    reflexivity.
+Qed.
+
+(* 乘法交换律 *)
+Theorem mult_comm : forall m n : nat,
+  m * n = n * m.
+Proof.
+  intros n m.
+  induction m as [| m' IHm'].
+  - rewrite mult_n_O.
+    reflexivity.
+  - rewrite <- mult_n_Sm.
+    simpl.
+    rewrite IHm'.
+    rewrite plus_comm.
     reflexivity.
 Qed.
 
@@ -193,3 +219,9 @@ Fixpoint bin_to_nat (n : bin) : nat :=
   | A n' => (N 2) * (bin_to_nat n')
   | B n' => (N 1) + (N 2) * (bin_to_nat n')
   end.
+
+Fixpoint nat_to_bin (n : nat) : bin :=
+match n with
+| O => Z
+| S n' => incr (nat_to_bin n')
+end.
