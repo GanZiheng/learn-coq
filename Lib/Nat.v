@@ -13,6 +13,13 @@ match n with
 end.
 
 
+Definition pred (n : nat) : nat :=
+  match n with
+  | O => O
+  | S n' => n'
+  end.
+
+
 Fixpoint evenb (n : nat) : bool :=
 match n with
 | O => true
