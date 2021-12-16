@@ -497,3 +497,61 @@ Example test_hd_error2 : hd_error [N 1] = Some (N 1).
 Proof. simpl. reflexivity. Qed.
 Example test_hd_error3 : hd_error [N 5; N 6] = Some (N 5).
 Proof. simpl. reflexivity. Qed.
+
+
+(* Partial Maps *)
+
+Inductive id : Type :=
+  | Id (n : nat).
+
+Definition eqb_id (x1 x2 : id) := 
+  match x1, x2 with
+  | Id n1, Id n2 => n1 =? n2
+  end.
+
+Theorem eqb_id_refl: forall x, true = eqb_id x x.
+Proof.
+  intros [x'].
+  simpl.
+  rewrite self_eq.
+  reflexivity.
+Qed.
+
+Inductive partial_map : Type :=
+  | empty
+  | record (i : id) (v : nat) (m : partial_map).
+
+Definition update (d : partial_map) (x : id) (value : nat) : partial_map :=
+  record x value d.
+
+Fixpoint find(x : id) (d : partial_map) : natoption :=
+  match d with
+  | empty => None
+  | record key value d' => if eqb_id x key
+                           then Some value
+                           else find x d'
+  end.
+
+Theorem update_eq: forall (d : partial_map) (x : id) (v: nat),
+  find x (update d x v) = Some v.
+Proof.
+  intros d x v.
+  simpl.
+  rewrite <- eqb_id_refl.
+  reflexivity.
+Qed.
+
+Theorem update_neq: forall (d : partial_map) (x y : id) (o: nat),
+  eqb_id x y = false -> find x (update d y o) = find x d.
+Proof.
+  intros d x y o.
+  intros H.
+  simpl.
+  rewrite H.
+  reflexivity.
+Qed.
+
+(* 构造不出 baz 类型 *)
+Inductive baz : Type :=
+  | Baz1 (x : baz)
+  | Baz2 (y : baz) (b : bool).

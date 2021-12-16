@@ -232,3 +232,14 @@ match n with
 | O => Z
 | S n' => incr (nat_to_bin n')
 end.
+
+
+Theorem self_eq: forall n : nat,
+  n =? n = true.
+Proof.
+  induction n as [| n'].
+  - reflexivity.
+  - simpl.
+    rewrite IHn'.
+    reflexivity.
+Qed.
