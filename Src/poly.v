@@ -442,7 +442,8 @@ Definition two : cnat :=
 Definition zero : cnat :=
   fun (X : Type) (f : X -> X) (x : X) => x.
 
-Definition three : cnat := @doit3times.
+Definition three : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => f (f (f x)).
 
 Check @one.
 
@@ -457,8 +458,13 @@ Proof. simpl. reflexivity. Qed.
 Example succ3: succ two = three.
 Proof. simpl. reflexivity. Qed.
 
+Definition succ_f (X : Type) (f f_0 : X -> X) (x : X) : X := f (f_0 x).
+
 Definition plus (n m : cnat) : cnat :=
-  fun (X : Type) (f : X -> X) (x : X) => n X f (m X f x).
+  (* fun (X : Type) (f : X -> X) (x : X) => n X f (m X f x). *)
+  (* fun (X : Type) => (n cnat succ) m X. *)
+  fun (X : Type) (f : X -> X) => n (X -> X) (succ_f X f) (m X f).
+
 Example plus1: plus zero one = one.
 Proof. simpl. reflexivity. Qed.
 Example plus2: plus two three = plus three two.
@@ -469,7 +475,10 @@ Proof. simpl. reflexivity. Qed.
 
 (* 思考定义 *)
 Definition mult (n m : cnat) : cnat :=
-  fun (X : Type) (f : X -> X) (x : X) => n X (m X f) x.
+  (* fun (X : Type) (f : X -> X) (x : X) => n X (m X f) x. *)
+  (* m X f 是对 X 类型的变量做 m 次 f 变换，其依然是 X -> X 的对 X 类型变量的变换，记作 f' *)
+  (* 之后 n X f' 意味着做 n 次 f' 变换，最终效果即 n * m 次 f 变换 *)
+  fun (X : Type) (f : X -> X) => n X (m X f).
 
 Example mult1: mult one one = one.
 Proof. simpl. reflexivity. Qed.
@@ -484,9 +493,10 @@ Proof. simpl. reflexivity. Qed.
 Definition exp (n m : cnat) : cnat :=
   fun (X : Type) (f : X -> X) (x : X) => m cnat (mult n) one X f x.
 (* 2. 注意和 mult 的区别 *)
-(* n X 可以理解为 f -> f 的变换 *)
 Definition exp' (n m : cnat) : cnat :=
-  fun (X : Type) (f : X -> X) (x : X) => m (X -> X) (n X) f x.
+  (* n X 代表对原变换重复 n 次，可以认为其是对 X -> X 的变换，即变换的变换 *)
+  (* 可以参看 plus 中使用 succ_f 的做法 *)
+  fun (X : Type) => m (X -> X) (n X).
 
 Example exp1: exp two two = plus two two.
 Proof. simpl. reflexivity. Qed.
