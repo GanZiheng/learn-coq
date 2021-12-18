@@ -306,3 +306,197 @@ Proof. simpl. reflexivity. Qed.
 Example test_partition2: partition (fun x => false) [N 5; N 9; N 0] = ([], [N 5; N 9; N 0]).
 Proof. simpl. reflexivity. Qed.
 
+(* 映射 *)
+Fixpoint map {X Y: Type} (f : X -> Y) (l : list X) : (list Y) :=
+  match l with
+  | [] => []
+  | h :: t => (f h) :: (map f t)
+  end.
+
+Lemma map_app: forall (X Y : Type) (f : X -> Y) (l1 l2 : list X),
+  map f (l1 ++ l2) = (map f l1) ++ (map f l2).
+Proof.
+  induction l1 as [| n1 l1'].
+  - reflexivity.
+  - simpl.
+    intros l2.
+    rewrite -> IHl1'.
+    reflexivity.
+Qed.
+
+Theorem map_rev: forall (X Y : Type) (f : X -> Y) (l : list X),
+  map f (rev l) = rev (map f l).
+Proof.
+  induction l as [| n l'].
+  - reflexivity.
+  - simpl.
+    rewrite map_app.
+    simpl.
+    rewrite <- IHl'.
+    reflexivity.
+Qed.
+
+Fixpoint flat_map {X Y: Type} (f : X -> list Y) (l : list X) : (list Y) :=
+  match l with
+  | [] => []
+  | x :: y => (f x) ++ flat_map f y
+  end.
+
+Example test_flat_map1: flat_map (fun n => [n; n; n]) [N 1; N 5; N 4] = [N 1; N 1; N 1; N 5; N 5; N 5; N 4; N 4; N 4].
+Proof. simpl. reflexivity. Qed.
+
+Definition option_map {X Y : Type} (f : X -> Y) (xo : option X) : option Y :=
+  match xo with
+    | None => None
+    | Some x => Some (f x)
+  end.
+
+(* 折叠 *)
+Fixpoint fold {X Y: Type} (f : X -> Y -> Y) (l : list X) (b : Y) : Y :=
+  match l with
+  (* 需要一个起始元素 *)
+  | nil => b
+  | h :: t => f h (fold f t b)
+  end.
+
+Example test_fold: fold cons [true; true; false] [] = [true; true; false].
+Proof. simpl. reflexivity. Qed.
+
+(* 用函数构造函数 *)
+Definition constfun {X : Type} (x : X) : nat -> X :=
+  fun (k : nat) => x.
+Definition ftrue := constfun true.
+Example constfun_example1: ftrue O = true.
+Proof. simpl. reflexivity. Qed.
+Example constfun_example2: (constfun (N 5)) (N 99) = N 5.
+Proof. simpl. reflexivity. Qed.
+
+Definition fold_length {X : Type} (l : list X) : nat :=
+  fold (fun _ n => S n) l O.
+Example test_fold_length1: fold_length [N 4; N 7; N 0] = N 3.
+Proof. simpl. reflexivity. Qed.
+
+Theorem fold_length_correct: forall X (l : list X),
+  fold_length l = length l.
+Proof.
+  induction l as [| n l'].
+  - reflexivity.
+  - simpl.
+    rewrite <- IHl'.
+    reflexivity.
+Qed.
+
+Definition fold_map {X Y: Type} (f: X -> Y) (l : list X) : list Y :=
+  fold (fun x y => (f x) :: y) l [].
+
+Example test_fold_map: fold_map negb [true; true] = [false; false].
+Proof. simpl. reflexivity. Qed.
+
+Theorem fold_map_correct: forall (X Y : Type) (f : X -> Y) (l : list X),
+  fold_map f l = map f l.
+Proof.
+  induction l as [| n l'].
+  - reflexivity.
+  - simpl.
+    rewrite <- IHl'.
+    (* reflexivity 化简力度比 simpl 更强 *)
+    reflexivity.
+Qed.
+
+Definition prod_curry {X Y Z : Type} (f : X * Y -> Z) (x : X) (y : Y) : Z :=
+  f (x, y).
+
+Definition prod_uncurry {X Y Z : Type} (f : X -> Y -> Z) (p : X * Y) : Z :=
+  f (fst p) (snd p).
+
+Check @prod_curry.
+Check @prod_uncurry.
+
+Theorem uncurry_curry: forall (X Y Z : Type) (f : X -> Y -> Z) x y,
+  prod_curry (prod_uncurry f) x y = f x y.
+Proof.
+  reflexivity.
+Qed.
+
+Theorem curry_uncurry: forall (X Y Z : Type) (f : (X * Y) -> Z) (p : X * Y),
+  prod_uncurry (prod_curry f) p = f p.
+Proof.
+  intros X Y Z.
+  intros f.
+  intros [x y].
+  reflexivity.
+Qed.
+
+Set Universe Polymorphism.
+Definition cnat := forall X : Type,
+  (X -> X) -> X -> X.
+
+Check cnat.
+
+Definition one : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => f x.
+
+Definition two : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => f (f x).
+
+Definition zero : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => x.
+
+Definition three : cnat := @doit3times.
+
+Check @one.
+
+(* match 行不通，cnat 本质上是一个函数，不是一个可归纳的数据类型 *)
+Definition succ (n : cnat) : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => f (n X f x).
+
+Example succ1: succ zero = one.
+Proof. simpl. reflexivity. Qed.
+Example succ2: succ one = two.
+Proof. simpl. reflexivity. Qed.
+Example succ3: succ two = three.
+Proof. simpl. reflexivity. Qed.
+
+Definition plus (n m : cnat) : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => n X f (m X f x).
+Example plus1: plus zero one = one.
+Proof. simpl. reflexivity. Qed.
+Example plus2: plus two three = plus three two.
+Proof. simpl. reflexivity. Qed.
+Example plus3:
+  plus (plus two two) three = plus one (plus three three).
+Proof. simpl. reflexivity. Qed.
+
+(* 思考定义 *)
+Definition mult (n m : cnat) : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => n X (m X f) x.
+
+Example mult1: mult one one = one.
+Proof. simpl. reflexivity. Qed.
+Example mult2: mult zero (plus three three) = zero.
+Proof. simpl. reflexivity. Qed.
+Example mult3: mult two three = plus three three.
+Proof. simpl. reflexivity. Qed.
+
+(* 如果直接令 m 接收 cnat 作为泛型参数会导致 universe inconsistency *)
+(* https://stackoverflow.com/questions/32153710/what-does-error-universe-inconsistency-mean-in-coq *)
+(* 1. 在 cnat 定义前添加 Set Universe Polymorphism. *)
+Definition exp (n m : cnat) : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => m cnat (mult n) one X f x.
+(* 2. 注意和 mult 的区别 *)
+(* n X 可以理解为 f -> f 的变换 *)
+Definition exp' (n m : cnat) : cnat :=
+  fun (X : Type) (f : X -> X) (x : X) => m (X -> X) (n X) f x.
+
+Example exp1: exp two two = plus two two.
+Proof. simpl. reflexivity. Qed.
+Example exp2: exp three zero = one.
+Proof. simpl. reflexivity. Qed.
+Example exp3: exp three two = plus (mult two (mult two two)) one.
+Proof. simpl. reflexivity. Qed.
+Example exp'1: exp' two two = plus two two.
+Proof. simpl. reflexivity. Qed.
+Example exp'2: exp' three zero = one.
+Proof. simpl. reflexivity. Qed.
+Example exp'3: exp' three two = plus (mult two (mult two two)) one.
+Proof. simpl. reflexivity. Qed.
