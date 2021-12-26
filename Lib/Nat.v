@@ -243,3 +243,10 @@ Proof.
     rewrite IHn'.
     reflexivity.
 Qed.
+
+Definition minustwo (n : nat) : nat :=
+  match n with
+    | O => O
+    | S O => O
+    | S (S n') => n'
+  end.
