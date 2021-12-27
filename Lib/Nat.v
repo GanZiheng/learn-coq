@@ -246,7 +246,44 @@ Qed.
 
 Definition minustwo (n : nat) : nat :=
   match n with
-    | O => O
-    | S O => O
-    | S (S n') => n'
+  | O => O
+  | S O => O
+  | S (S n') => n'
   end.
+
+Fixpoint double (n : nat) :=
+  match n with
+  | O => O
+  | S n' => S (S (double n'))
+  end.
+
+Theorem mult_plus_distr_r: forall n m p : nat,
+  (n + m) * p = (n * p) + (m * p).
+Proof.
+  intros n m p.
+  induction n as [| n IHn'].
+  - induction p as [| p IHp'].
+    + reflexivity.
+    + reflexivity.
+  - simpl.
+    assert (H: p + n * p + m * p = p + (n * p + m * p)).
+    {
+      rewrite -> plus_assoc.
+      reflexivity.
+    }
+    rewrite -> H.
+    rewrite <- IHn'.
+    reflexivity.
+Qed.
+
+Theorem mult_assoc: forall n m p : nat,
+  n * (m * p) = (n * m) * p.
+Proof.
+  intros n m p.
+  induction n as [| n' IHn'].
+  - reflexivity.
+  - simpl.
+    rewrite -> mult_plus_distr_r.
+    rewrite IHn'.
+    reflexivity.
+Qed.

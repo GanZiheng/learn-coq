@@ -75,3 +75,344 @@ Proof.
   - apply eq1.
 Qed.
 
+
+(* The injection and discriminate Tactics *)
+Theorem S_injective: forall (n m : nat),
+  S n = S m -> n = m.
+Proof.
+  intros n m H1.
+  assert (H2: n = pred (S n)).
+  { 
+    reflexivity.
+  }
+  rewrite H2.
+  rewrite H1.
+  reflexivity.
+Qed.
+
+Theorem S_injective': forall (n m : nat),
+  S n = S m -> n = m.
+Proof.
+  intros n m H.
+  injection H as Hnm.
+  apply Hnm.
+Qed.
+
+Theorem injection_ex1: forall (n m o : nat),
+  [n; m] = [o; o] -> [n] = [m].
+Proof.
+  intros n m o H.
+  injection H as H1 H2.
+  rewrite H1.
+  rewrite H2.
+  reflexivity.
+Qed.
+
+Theorem injection_ex2: forall (n m o : nat),
+  [n; m] = [o; o] -> [n] = [m].
+Proof.
+  intros n m o H.
+  injection H.
+  intros H1 H2.
+  rewrite H1.
+  rewrite H2.
+  reflexivity.
+Qed.
+
+Example injection_ex3: forall (X : Type) (x y z : X) (l j : list X),
+  x :: y :: l = z :: j ->
+  j = z :: l ->
+  x = y.
+Proof.
+  intros X x y z l j.
+  intros H1 H2.
+  injection H1 as H11 H12.
+  rewrite H2 in H12.
+  injection H12 as H3.
+  rewrite H11.
+  rewrite H3.
+  reflexivity.
+Qed.
+
+Theorem eqb_0_l: forall n,
+   O =? n = true -> n = O.
+Proof.
+  intros [| n'].
+  - reflexivity.
+  - intros H.
+    discriminate.
+Qed.
+
+Theorem discriminate_ex1: forall (n : nat),
+  S n = O -> N 2 + N 2 = N 5.
+Proof.
+  intros n.
+  intros contra.
+  discriminate contra.
+Qed.
+
+Example discriminate_ex3: forall (X : Type) (x y z : X) (l j : list X),
+  x :: y :: l = [] -> x = z.
+Proof.
+  intros x y z l j.
+  intros contra.
+  discriminate.
+Qed.
+
+Theorem f_equal: forall (A B : Type) (f : A -> B) (x y : A),
+  x = y -> f x = f y.
+Proof.
+  intros  A B f x y.
+  intros H.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Theorem eq_implies_succ_equal': forall (n m : nat),
+  n = m -> S n = S m.
+Proof.
+  intros n m H.
+  apply f_equal.
+  apply H.
+Qed.
+
+
+(* 对假设使用策略 *)
+Theorem S_inj: forall (n m : nat) (b : bool),
+  (S n) =? (S m) = b -> n =? m = b.
+Proof.
+  intros n m b.
+  intros H.
+  simpl in H.
+  apply H.
+Qed.
+
+Theorem silly3': forall (n : nat),
+  (n =? N 5 = true -> (S (S n)) =? N 7 = true) ->
+  true = (n =? N 5) ->
+  true = ((S (S n)) =? N 7).
+Proof.
+  intros n eq H.
+  symmetry in H.
+  apply eq in H.
+  symmetry in H.
+  apply H.
+Qed.
+
+
+(* 变换归纳假设 *)
+Theorem double_injective: forall (n m : nat),
+  double n = double m -> n = m.
+Proof.
+  induction n as [| n' IHn'] .
+  - simpl.
+    intros [| m'] H.
+    + reflexivity.
+    + discriminate H.
+  - simpl.
+    intros [| m'] H.
+    + discriminate.
+    + apply f_equal.
+      apply IHn'.
+      injection H as goal.
+      apply goal.
+Qed.
+
+Theorem eqb_true: forall n m,
+  n =? m = true -> n = m.
+Proof.
+  induction n as [| n' IHn'].
+  - intros [| m'] H.
+    + reflexivity.
+    + discriminate.
+  - intros [| m'] H.
+    + discriminate.
+    + apply f_equal.
+      apply IHn'.
+      simpl in H.
+      apply H.
+Qed.
+
+Theorem plus_n_n_injective: forall n m,
+  n + n = m + m -> n = m.
+Proof.
+  induction n as [| n'].
+  - intros [| m'] H.
+    + reflexivity.
+    + discriminate.
+  - intros [| m'] H.
+    + discriminate.
+    + apply f_equal.
+      apply IHn'.
+      simpl in H.
+      rewrite plus_n_Sm in H.
+      rewrite plus_n_Sm in H.
+      injection H as H'.
+      apply H'.
+Qed.
+
+Theorem double_injective_take2: forall (n m : nat),
+  double n = double m -> n = m.
+Proof.
+  intros n m.
+  generalize dependent n.
+  induction m as [| m' IHm'] .
+  - simpl.
+    intros [| n'] H.
+    + reflexivity.
+    + discriminate H.
+  - simpl.
+    intros [| n'] H.
+    + discriminate.
+    + apply f_equal.
+      apply IHm'.
+      injection H as goal.
+      apply goal.
+Qed.
+
+Theorem nth_error_after_last: forall (n : nat) (X : Type) (l : list X),
+  length l = n ->
+  nth_error l n = None.
+Proof.
+  intros n X.
+  induction n as [| n'].
+  - destruct l as [| n l']. 
+    + reflexivity.
+    + intros H.
+      discriminate H.
+  - intros [| n l'] H.
+    + reflexivity.
+    + apply IHn'.
+      injection H as H'.
+      apply H'.
+Qed.
+
+
+(* 展开定义 *)
+Definition square n := n * n.
+
+Lemma square_mult: forall n m, square (n * m) = square n * square m.
+Proof.
+  intros n m.
+  unfold square.
+  rewrite mult_assoc.
+  rewrite mult_assoc.
+  assert (H: n * m * n = n * n * m).
+  {
+    rewrite mult_comm.
+    rewrite mult_assoc.
+    reflexivity.
+  }
+  rewrite H.
+  reflexivity.
+Qed.
+
+Definition bar x :=
+  match x with
+  | O => N 5
+  | S _ => N 5
+  end.
+
+Fact silly_fact: forall m, bar m + N 1 = bar (m + N 1) + N 1.
+Proof.
+  intros m.
+  unfold bar.
+  destruct m as [| m'].
+  - reflexivity.
+  - reflexivity.
+Qed.
+
+
+(* 对复合表达式使用 destruct *)
+Definition sillyfun (n : nat) : bool :=
+  if n =? N 3 then false
+  else if n =? N 5 then false
+  else false.
+
+Theorem sillyfun_false: forall (n : nat),
+  sillyfun n = false.
+Proof.
+  intros n.
+  unfold sillyfun.
+  destruct (n =? N 3) eqn : E1.
+  - reflexivity.
+  - destruct (n =? N 5) eqn : E2.
+    + reflexivity.
+    + reflexivity.
+Qed.
+
+Theorem combine_split: forall X Y (l : list (X * Y)) l1 l2,
+  split l = (l1, l2) -> combine l1 l2 = l.
+Proof.
+  intros X Y.
+  intros l.
+  (* induction 后加 eqn : E 会产生矛盾的假设 *)
+  induction l as [| n l' IHl'].
+  - intros l1 l2 H.
+    injection H as H1 H2.
+    rewrite <- H1.
+    rewrite <- H2.
+    reflexivity.
+  - destruct n as [n1 n2].
+    simpl.
+    destruct (split l') as [l1' l2'].
+    intros l1 l2 H.
+    injection H as H1 H2.
+    rewrite <- H1.
+    rewrite <- H2.
+    simpl. 
+    assert (Hc : combine l1' l2' = l').
+    { 
+      apply IHl'.
+      - reflexivity.
+    }
+    rewrite Hc.
+    reflexivity.
+Qed.
+
+Definition sillyfun1 (n : nat) : bool :=
+  if n =? N 3 then true
+  else if n =? N 5 then true
+  else false.
+
+Theorem sillyfun1_odd_FAILED: forall (n : nat),
+  sillyfun1 n = true -> oddb n = true.
+Proof.
+  intros n.
+  intros H.
+  unfold sillyfun1 in H.
+  destruct (n =? N 3) eqn : Heq3.
+  - apply eqb_true in Heq3.
+    rewrite Heq3.
+    reflexivity.
+  - destruct (n =? N 5) eqn : Heq5.
+    + apply eqb_true in Heq5.
+      rewrite Heq5.
+      reflexivity.
+    + discriminate.
+Qed.
+
+Theorem bool_fn_applied_thrice: forall (f : bool -> bool) (b : bool),
+  f (f (f b)) = f b.
+Proof.
+  intros f.
+  intros b.
+  destruct b eqn : Eb.
+  - destruct (f true) eqn : Et.
+    + rewrite Et, Et.
+      reflexivity.
+    + destruct (f false) eqn : Ef.
+      * apply Et.
+      * apply Ef.
+  - destruct (f true) eqn : Et.
+    + destruct (f false) eqn : Ef.
+      * rewrite Et, Et.
+        reflexivity.
+      * rewrite Ef, Ef.
+        reflexivity.
+    + destruct (f false) eqn : Ef.
+      * rewrite Et, Ef.
+        reflexivity.
+      * rewrite Ef, Ef.
+        reflexivity.
+Qed.
