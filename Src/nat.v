@@ -26,9 +26,9 @@ Check S (S 0).
 
 Definition minustwo (n : nat) : nat :=
   match n with
-    | O => O
-    | S O => O
-    | S (S n') => n'
+  | O => O
+  | S O => O
+  | S (S n') => n'
   end.
 
 Compute minustwo 4.

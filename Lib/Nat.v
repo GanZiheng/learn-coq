@@ -7,10 +7,10 @@ Inductive nat : Type :=
 
 
 Fixpoint N (n : Datatypes.nat) : nat :=
-match n with
-| 0 => O
-| Datatypes.S m => S (N m)
-end.
+  match n with
+  | 0 => O
+  | Datatypes.S m => S (N m)
+  end.
 
 
 Definition pred (n : nat) : nat :=
@@ -21,11 +21,11 @@ Definition pred (n : nat) : nat :=
 
 
 Fixpoint evenb (n : nat) : bool :=
-match n with
-| O => true
-| S O => false
-| S (S n') => evenb n'
-end.
+  match n with
+  | O => true
+  | S O => false
+  | S (S n') => evenb n'
+  end.
 
 Definition oddb (n : nat) : bool :=
   negb (evenb n).
@@ -228,10 +228,10 @@ Fixpoint bin_to_nat (n : bin) : nat :=
   end.
 
 Fixpoint nat_to_bin (n : nat) : bin :=
-match n with
-| O => Z
-| S n' => incr (nat_to_bin n')
-end.
+  match n with
+  | O => Z
+  | S n' => incr (nat_to_bin n')
+  end.
 
 
 Theorem self_eq: forall n : nat,
