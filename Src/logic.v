@@ -443,3 +443,218 @@ Proof.
       right.
       apply H2.
 Qed.
+
+
+(* 使用命题编程 *)
+Fixpoint In {A : Type} (x : A) (l : list A) : Prop :=
+  match l with
+  | [] => False
+  | x' :: l' => x' = x \/ In x l'
+  end.
+
+Example In_example_1: In 4 [1; 2; 3; 4; 5].
+Proof.
+  simpl. right. right. right. left. reflexivity.
+Qed.
+
+Example In_example_2:
+  forall n, In n [N 2; N 4] ->
+  exists n', n = (N 2) * n'.
+Proof.
+  simpl.
+  intros n [H | [H | []]].
+  - exists (N 1).
+    rewrite <- H.
+    reflexivity.
+  - exists (N 2).
+    rewrite <- H.
+    reflexivity.
+Qed.
+
+Lemma In_map:
+  forall (A B : Type) (f : A -> B) (l : list A) (x : A),
+  In x l -> In (f x) (map f l).
+Proof.
+  intros A B f l x.
+  induction l as [|x' l' IHl'].
+  - simpl.
+    intros [].
+  - simpl.
+    intros [H | H].
+    + rewrite H.
+      left.
+      reflexivity.
+    + right.
+      apply IHl'.
+      apply H.
+Qed.
+
+Lemma In_map_iff:
+  forall (A B : Type) (f : A -> B) (l : list A) (y : B),
+  In y (map f l) <-> exists x, f x = y /\ In x l.
+Proof.
+  intros A B f l y.
+  split.
+  - induction l as [| x' l' IHl'].
+    + simpl.
+      intros [].
+    + simpl.
+      intros [H1 | H2].
+      * exists x'.
+        split.
+        ** apply H1.
+        ** left.
+           reflexivity.
+      * apply IHl' in H2.
+        destruct H2 as [x [H21 H22]].
+        exists x.
+        split.
+        ** apply H21.
+        ** right.
+           apply H22.
+  - induction l as [| x' l' IHl'].
+    + simpl.
+      intros [x [H1 H2]].
+      apply H2.
+    + simpl.
+      intros [x [H1 H2]].
+      destruct H2 as [H21 | H22].
+      * rewrite <- H21 in H1.
+        left.
+        apply H1.
+      * right.
+        apply IHl'.
+        exists x.
+        split.
+        ** apply H1.
+        ** apply H22.
+Qed.
+
+Lemma In_app_iff: forall A l1 l2 (a : A),
+  In a (l1 ++ l2) <-> In a l1 \/ In a l2.
+Proof.
+  intros A l1 l2.
+  split.
+  induction l1 as [|x' l' IHl'].
+  - simpl.
+    right.
+    apply H.
+  - simpl.
+    intros [H1 | H2].
+    + left.
+      left.
+      apply H1.
+    + apply IHl' in H2.
+      destruct H2 as [H21 | H22].
+      * left.
+        right.
+        apply H21.
+      * right.
+        apply H22.
+  - induction l1 as [|x' l' IHl'].
+    + simpl.
+      intros [[] | H2].
+      apply H2.
+    + simpl.
+      intros [[H1 | H2] | H3].
+      * left.
+        apply H1.
+      * right.
+        apply IHl'.
+        left.
+        apply H2.
+      * right.
+        apply IHl'.
+        right.
+        apply H3.
+Qed.  
+
+Fixpoint All {T : Type} (P : T -> Prop) (l : list T) : Prop :=
+  match l with
+    | [] => True
+    | x :: y => P x /\ All P y
+  end.
+
+Lemma All_In:
+  forall T (P : T -> Prop) (l : list T),
+  (forall x, In x l -> P x) <-> All P l.
+Proof.
+  intros T P l.
+  split.
+  - induction l as [| x' l' IHl'].
+    + reflexivity.
+    + simpl.
+      intro H.
+      split.
+      * apply H.
+        left.
+        reflexivity.
+      * apply IHl'.
+        intros x H1.
+        apply H.
+        right.
+        apply H1.
+  - induction l as [| x' l' IHl'].
+    + simpl.
+      intros H x [].
+    + simpl.
+      intros [H11 H12] x.
+      intros [H21 | H22].
+      * rewrite <- H21.
+        apply H11.
+      * apply IHl'.
+       ** apply H12.
+       ** apply H22.
+Qed.
+
+Definition combine_odd_even (Podd Peven : nat -> Prop) : nat -> Prop :=
+  fun n =>
+    match oddb n with
+      | true => Podd n
+      | false => Peven n
+    end.
+
+Theorem combine_odd_even_intro:
+  forall (Podd Peven : nat -> Prop) (n : nat),
+    (oddb n = true -> Podd n) ->
+    (oddb n = false -> Peven n) ->
+    combine_odd_even Podd Peven n.
+Proof.
+  intros Podd Peven n H1 H2.
+  unfold combine_odd_even. 
+  destruct (oddb n).
+  - apply H1.
+    reflexivity.
+  - apply H2.
+    reflexivity.
+Qed. 
+
+Theorem combine_odd_even_elim_odd:
+  forall (Podd Peven : nat -> Prop) (n : nat),
+  combine_odd_even Podd Peven n ->
+  oddb n = true ->
+  Podd n.
+Proof.
+  intros Podd Peven n.
+  unfold combine_odd_even.
+  destruct (oddb n).
+  - intros.
+    apply H.
+  - intros.
+    discriminate H0.
+Qed.
+
+Theorem combine_odd_even_elim_even:
+  forall (Podd Peven : nat -> Prop) (n : nat),
+  combine_odd_even Podd Peven n ->
+  oddb n = false ->
+  Peven n.
+Proof.
+  intros Podd Peven n.
+  unfold combine_odd_even.
+  destruct (oddb n).
+  - intros.
+    discriminate H0.
+  - intros.
+    apply H.
+Qed.
