@@ -658,3 +658,52 @@ Proof.
   - intros.
     apply H.
 Qed.
+
+
+(* 对参数应用定理 *)
+Check plus_comm.
+
+Lemma plus_comm3:
+  forall x y z, x + (y + z) = (z + y) + x.
+Proof.
+  intros x y z.
+  rewrite plus_comm.
+  Check (plus_comm y z).
+  rewrite (plus_comm y z).
+  reflexivity.
+Qed.
+
+Theorem in_not_nil:
+  forall A (x : A) (l : list A), In x l -> l <> [].
+Proof.
+  intros A x l H.
+  unfold not.
+  intro Hl.
+  destruct l eqn : HE.
+  - simpl in H.
+    destruct H.
+  - discriminate Hl.
+Qed.
+
+Lemma in_not_nil_42:
+  forall l : list nat, In (N 42) l -> l <> [].
+Proof.
+  intros l H.
+  (* apply in_not_nil with (x := N 42). *)
+  apply (in_not_nil nat (N 42)).
+  apply H.
+  (* apply (in_not_nil _ _ _ H). *)
+Qed.
+
+Example lemma_application_ex:
+  forall {n : nat} {ns : list nat},
+  In n (map (fun m => m * (N 0)) ns) -> n = N 0.
+Proof.
+  intros n ns H.
+  Check (proj1 _ _ (In_map_iff _ _ _ _ _) H).
+  destruct (proj1 _ _ (In_map_iff _ _ _ _ _) H) as [m [Hm _]].
+  rewrite mult_comm in Hm.
+  rewrite mult_O_n in Hm.
+  rewrite <- Hm.
+  reflexivity.
+Qed.
