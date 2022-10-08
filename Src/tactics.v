@@ -551,3 +551,102 @@ Proof.
     + simpl.
       apply IHl'.
 Qed.
+
+
+Definition excluded_middle : Prop :=
+  forall (P : Prop), P \/ ~ P.
+
+Definition contrapositive : Prop :=
+  forall (P Q : Prop), (P -> Q) <-> (~ Q -> ~ P).
+
+Definition double_negation : Prop :=
+  forall (P : Prop), ~ (~ P) <-> P.
+
+Theorem de_morgan: forall (P Q : Prop), ~ (P \/ Q) <-> (~ P) /\ (~ Q).
+Proof.
+  intros P Q.
+  split.
+  - unfold not.
+    intro H1.
+    split.
+    + intro H2.
+      apply H1.
+      left.
+      apply H2.
+    + intro H2.
+      apply H1.
+      right.
+      apply H2.
+  - unfold not.
+    intros H1 H2.
+    destruct H1 as [H11 H12].
+    destruct H2 as [H21 | H22].
+    + apply H11.
+      apply H21.
+    + apply H12.
+      apply H22.
+Qed.
+
+Theorem equivalent: excluded_middle <-> contrapositive.
+Proof.
+  unfold excluded_middle.
+  unfold contrapositive.
+  split.
+  - intros H1 P Q.
+    split.
+    + intros H2 H3.
+      intro H4.
+      apply H3.
+      apply H2.
+      apply H4.
+    + intros H2 H3.
+      specialize (H1 Q) as H4.
+      destruct H4 as [H41 | H42].
+      * apply H41.
+      * apply H2 in H42.
+        apply H42 in H3.
+        destruct H3.
+  - intros H1 P.
+    assert double_negation as H2.
+    {
+      intro Q.
+      specialize (H1 True Q).
+      split.
+      - intro H3.
+        apply H1.
+        + intro H4.
+          apply H3 in H4.
+          destruct H4.
+        + reflexivity.
+      - intro H3.
+        unfold not.
+        intro H4.
+        apply H4.
+        apply H3.
+    }
+    apply H2.
+    intro H3.
+    apply de_morgan in H3.
+    destruct H3 as [H31 H32].
+    apply H32 in H31.
+    destruct H31.
+Qed.
+
+Theorem not_equivalent_with_neg: forall (P : Prop), ~ (P <-> ~ P).
+Proof.
+  intros P H1.
+  unfold not in H1.
+  destruct H1 as [H11 H12].
+  assert (H2: P -> False).
+  {
+    intro H3.
+    apply H11.
+    apply H3.
+    apply H3.
+  }
+  apply H11.
+  - apply H12.
+    apply H2.
+  - apply H12.
+    apply H2.
+Qed.
